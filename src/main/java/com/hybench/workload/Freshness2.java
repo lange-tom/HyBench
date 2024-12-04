@@ -86,7 +86,7 @@ public class Freshness2 {
                      ts_ap = ret_ap.get(tid);
                      ts_tp = ret_tp.get(tid);
                      diff = ts_tp - ts_ap;
-                    if (diff>0){
+                    if (diff!=0){
                         logger.info("TP Query starting time is : " + ts_Q1);
                         logger.info("Q1: this is an update case!");
                         logger.info("join id is "+tid);
@@ -155,7 +155,7 @@ public class Freshness2 {
                     ts_ap = ret_ap.get(tid);
                     ts_tp = ret_tp.get(tid);
                     diff = ts_tp - ts_ap;
-                    if(diff>0){
+                    if(diff!=0){
                         logger.info("TP Query starting time is : " + ts_Q2);
                         logger.info("Q2: this is an update case!");
                         logger.info("join id is "+tid);

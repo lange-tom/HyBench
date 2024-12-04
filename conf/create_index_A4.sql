@@ -2,11 +2,11 @@ SET SCHEMA hybench1x_column;
 
 create index idx_loanapps_1 on loanapps ( applicantid );
 
-create index idx_loanapps_2 on loanapps ( loanapps_ts );
+create index idx_loanapps_2 on loanapps ( timestamp );
 
 create index idx_loantrans_1 on loantrans ( applicantid );
 
-create index idx_loantrans_2 on loantrans ( loantrans_ts );
+create index idx_loantrans_2 on loantrans ( timestamp );
 
 create index idx_transfer_1 on transfer ( sourceid );
 

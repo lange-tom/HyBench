@@ -3,26 +3,26 @@ SET SCHEMA hybench1x_column;
 CREATE TABLE customer (
 custID int,
 companyID int,
-gender varchar(6),
-name varchar(15),
+gender char(6),
+name char(15),
 age int,
-phone varchar(11),
-province varchar(15),
-city varchar(15),
-loan_balance decimal(15,2),
+phone char(11),
+province char(15),
+city char(15),
+loan_balance real,
 saving_credit int,
 checking_credit int,
 loan_credit int,
 Isblocked int,
 created_date timestamp,
-last_update_timestamp timestamp default current_timestamp,
+last_update_timestamp timestamp,
 primary key(custid)
 );
 
 CREATE TABLE company (
 companyID int,
-name varchar(50),
-category varchar(50),
+name varchar,
+category varchar,
 staff_size int,
 loan_balance real,
 phone char(11),
@@ -42,7 +42,8 @@ CREATE TABLE savingAccount (
  userID int,
  balance real,
  Isblocked int,
- savingAccount_ts timestamp,
+ timestamp timestamp,
+ fresh_ts timestamp default current_timestamp,
  PRIMARY KEY(accountID)
 );
 
@@ -52,7 +53,7 @@ accountID int,
 userID int,
 balance real,
 Isblocked int,
-checkingAccount_ts timestamp,
+timestamp timestamp,
 PRIMARY KEY(accountID)
 );
 
@@ -62,8 +63,8 @@ CREATE TABLE transfer (
   targetID int,
   amount real,
   type char(10),
-  transfer_ts timestamp,
-  fresh_ts timestamp  default current_timestamp,
+  timestamp timestamp,
+  fresh_ts timestamp default current_timestamp,
   PRIMARY KEY(id)
 );
 
@@ -73,7 +74,7 @@ CREATE TABLE checking (
   targetID int,
   amount real,
   type char(10),
-  checking_ts timestamp,
+  timestamp timestamp,
   PRIMARY KEY(id)
 );
 
@@ -83,7 +84,7 @@ CREATE TABLE loanapps (
   amount real,
   duration int,
   status char(12),
-  loanapps_ts timestamp,
+  timestamp timestamp,
   PRIMARY KEY(id)
 );
 
@@ -93,7 +94,7 @@ CREATE TABLE loantrans (
   appID int,
   amount real,
   status char(12),
-  loantrans_ts timestamp,
+  timestamp timestamp,
   duration int,
   contract_timestamp timestamp,
   delinquency int,

@@ -1,6 +1,6 @@
 [AP-1]
-sql =""" select sourceid,targetid,
-case when sourceid= ? then 'outbound' when targetid= ? then 'inbound' end as direction,
+sql =""" select  sourceid,targetid,
+case when sourceid = ? then 'outbound' when targetid= ? then 'inbound' end as direction,
 sum(amount) as total_amount
 from transfer where sourceid= ? or targetid = ?
 group by sourceid,targetid
@@ -9,13 +9,13 @@ order by total_amount desc;"""
 [AP-2]
 sql = """select cu.custid,la.timestamp,la.amount,lt.timestamp,lt.amount,lt.status
 from customer cu,loanapps la,loantrans lt
-where cu.custid=la.applicantid and la.id=lt.appid and cu.custid = ?;"""
+where cu.custID=la.applicantid and la.id=lt.appid and cu.custID = ?;"""
 
 [AP-2.1]
 sql = "SELECT applicantid FROM loanapps where applicantid<? ORDER BY RANDOM() LIMIT 1;"
 
 [AP-3]
-sql = """select custid, name,phone,sum(amount)
+sql = """select custID, name,phone,sum(amount)
 from
 (select cu.custid,cu.name,cu.phone,t.amount
 from customer cu join transfer t on cu.custid = t.targetid where custid= ?
@@ -90,7 +90,7 @@ group by sourceid, targetid, type
 order by amount DESC limit 10;"""
 
 [AP-8]
-sql = """With blocked_account as (select c.name as name, s.userID as id
+sql ="""With blocked_account as (select c.name as name, s.userID as id
 from customer c, savingaccount s where c.custid=s.userID and (c.isblocked=1 or s.isblocked=1) limit 100)
 select name, t.sourceid, t.targetid, sum(t.amount) as amount
 from blocked_account b, transfer t where b.id=t.sourceid group by name, t.sourceid, t.targetid
@@ -113,22 +113,22 @@ where c.companyid = t.targetid
 and exists (select *
 from loanapps la
 where la.applicantid=c.companyid and date(timestamp::timestamp)
-between '2023-11-01' and (cast('2023-11-01' as date) + 60))
+between '2023-11-01' and cast('2024-01-01' as date))
 and not exists (select * from loantrans lt
 where lt.applicantid=c.companyid and date(timestamp::timestamp)
-between '2023-11-01' and (cast('2023-11-01' as date) + 60))
+between '2023-11-01' and cast('2024-01-01' as date))
 group by c.name order by total_revenue DESC;"""
 
 [AP-10]
-sql = """With big_account_inbound as (select t.targetid as id, c.name as name, sum(t.amount) as amount
+sql = """With big_account_inbound as (select t.targetid as id, c.name as name, t.amount as amount
 from customer c, transfer t
-where date(t.timestamp::timestamp) between '2023-11-01' and (cast('2023-11-01' as date) + 60)
+where date(t.timestamp::timestamp) between '2023-11-01' and cast('2024-01-01' as date)
 and c.custid=t.targetid
-group by name, id
+group by name, id, amount
 order by amount DESC limit 10),
 big_account_outbound as (select b.id, b.name as name, sum(t.amount) as amount
 from big_account_inbound b, transfer t
-where date(t.timestamp::timestamp) between '2023-11-01' and (cast('2023-11-01' as date) + 60)
+where date(t.timestamp::timestamp) between '2023-11-01' and cast('2024-01-01' as date)
 and b.id=t.sourceid
 group by b.id, b.name)
 select bin.id, bin.name, (sum(bin.amount)-sum(bout.amount)) as revenue
@@ -155,13 +155,15 @@ order by invest_amount DESC, count DESC, saving_balance DESC, checking_balance D
 [AP-12]
 sql = """select co.companyid, count(case when lt.status='accept' then 1 else null end) * 100.0/count(la.id) as rate
 from company co, loanapps la, loantrans lt
-where co.category =? and co.companyid=la.applicantid and la.applicantid=lt.applicantid
+where co.category =?
+and co.companyid=la.applicantid and la.applicantid=lt.applicantid
 group by co.companyid
 order by rate DESC limit 10;"""
 
 [AP-13]
-sql = """select sourceid, targetid, province, amount, rank() over (partition by province order by amount desc) as ranking
-from transfer tr, customer cu
+sql = """select sourceid,targetid,province,amount,
+rank() over (partition by province order by amount desc) as ranking
+from transfer tr,customer cu
 where tr.targetid=cu.custid and tr.sourceid=?;"""
 
 [TP-1]
@@ -171,7 +173,7 @@ sql = "select * from customer where custid=?;"
 sql = "select * from company where companyID=?;"
 
 [TP-3]
-sql =  "select * from SAVINGACCOUNT where accountid=?;"
+sql = "select * from SAVINGACCOUNT where accountid=?;"
 
 [TP-4]
 sql = "select * from CHECKINGACCOUNT where accountid=?;"
@@ -229,31 +231,32 @@ sql = [
 
 [TP-13]
 sql = [
-    "SELECT ID, APPLICANTID, AMOUNT, DURATION, TIMESTAMP FROM LOANAPPS WHERE status='under_review' ORDER BY RANDOM() LIMIT 1",
-    "INSERT INTO LOANTRANS VALUES(DEFAULT, ?,?,?,?,?,?,?,?)",
+    "SELECT ID, APPLICANTID, AMOUNT, DURATION, timestamp FROM LOANAPPS WHERE status='under_review' ORDER BY timestamp limit 1;",
+    "INSERT INTO LOANTRANS VALUES(DEFAULT, ?,?,?,?,?,?,?,?);",
     "UPDATE CUSTOMER SET loan_balance = loan_balance + ? where custID = ?",
     "UPDATE COMPANY SET loan_balance = loan_balance + ? where companyID = ?",
-    "UPDATE LOANAPPS SET STATUS=? WHERE ID=?"
+    "UPDATE LOANAPPS SET STATUS=? WHERE ID=?;"
 ]
 
 [TP-14]
 sql = [
-    "SELECT id, APPLICANTID, AMOUNT, contract_timestamp FROM LOANTRANS WHERE status='accept' ORDER BY RANDOM() LIMIT 1",
-    "UPDATE SAVINGACCOUNT SET BALANCE = BALANCE + ? WHERE ACCOUNTID = ?",
-    "UPDATE LOANTRANS SET STATUS='lent', timestamp=? WHERE ID=?"
+    "SELECT id, APPLICANTID, AMOUNT, contract_timestamp FROM LOANTRANS WHERE status='accept' ORDER BY timestamp limit 1;",
+    "UPDATE SAVINGACCOUNT SET BALANCE = BALANCE + ? WHERE ACCOUNTID = ?;",
+    "UPDATE LOANTRANS SET STATUS='lent', timestamp=? WHERE ID=?;"
 ]
+
 [TP-15]
 sql = [
-    "SELECT id, APPLICANTID, duration, timestamp FROM LOANTRANS WHERE status='lent' order by timestamp limit 1",
-    "UPDATE LOANTRANS SET delinquency=1, timestamp=? WHERE id=?"
+    "SELECT id, APPLICANTID, duration, timestamp FROM LOANTRANS WHERE status='lent' ORDER BY timestamp limit 1;",
+    "UPDATE LOANTRANS SET delinquency=1, timestamp=? WHERE id=?;"
 ]
 
 [TP-16]
 sql = [
-    "SELECT id, APPLICANTID, duration, amount, timestamp FROM LOANTRANS WHERE status='lent' ORDER BY RANDOM() LIMIT 1",
-    "SELECT balance from SAVINGACCOUNT WHERE ACCOUNTID = ?",
-    "UPDATE SAVINGACCOUNT SET BALANCE = BALANCE - ? WHERE ACCOUNTID = ?",
-    "UPDATE LOANTRANS SET status='repaid',timestamp=? WHERE id=?"
+    "SELECT id, APPLICANTID, duration, amount, timestamp FROM LOANTRANS WHERE status='lent' ORDER BY timestamp limit 1;",
+    "SELECT balance from SAVINGACCOUNT WHERE ACCOUNTID = ?;",
+    "UPDATE SAVINGACCOUNT SET BALANCE = BALANCE - ? WHERE ACCOUNTID = ?;",
+    "UPDATE LOANTRANS SET status='repaid',timestamp=? WHERE id=?;"
 ]
 
 [TP-17]
@@ -286,17 +289,17 @@ sql= [
 
 [AT-1]
 sql = [
-    "SELECT isblocked, balance FROM savingAccount WHERE accountID = ?",
+    "SELECT isblocked,balance FROM savingAccount WHERE accountID = ?",
     "select count(*) from transfer t, savingAccount s where t.targetid=? and s.isblocked=1 and t.sourceid=s.accountid;",
     "UPDATE savingAccount SET balance = balance - ? where accountID = ?",
     "UPDATE savingAccount SET balance = balance + ? where accountID = ?",
-    "INSERT INTO transfer(id,sourceID,targetID,amount,type,timestamp) VALUES (DEFAULT, ?,?,?,?,?)"
+    "INSERT INTO transfer VALUES (DEFAULT, ?,?,?,?,?)"
 ]
 
 [AT-2]
 sql = [
-    "SELECT isblocked, balance FROM savingAccount WHERE accountID = ?",
-    "select count(*) from checking ch, checkingAccount ca where ch.sourceid=? and ca.isblocked=1 and ch.targetid=ca.accountid",
+    "SELECT isblocked,balance FROM checkingAccount WHERE accountID = ?",
+    "select count(*) from checking ch, checkingAccount ca where ch.sourceid=? and ca.isblocked=1 and ch.targetid=ca.accountid;",
     "UPDATE checkingAccount SET balance = balance - ? where accountID = ?",
     "UPDATE checkingAccount SET balance = balance + ? where accountID = ?",
     "INSERT INTO checking VALUES (DEFAULT, ?,?,?,?,?)"
@@ -304,31 +307,31 @@ sql = [
 
 [AT-3]
 sql = [
-"SELECT isblocked FROM SavingAccount WHERE accountID = ?",
-"""Select (inbound.t_amount-outbound.t_amount) as t_amount from
-(select sa.accountid as sid, sum(t.amount) as t_amount from savingaccount sa, transfer t
-where sa.accountid=? and sa.accountid=t.sourceid
-group by sid) as outbound,
-(select sa.accountid as sid, sum(t.amount) as t_amount from savingaccount sa, transfer t
-where sa.accountid=? and sa.accountid=t.targetid
-group by sid) as inbound""",
-"INSERT INTO LOANTRANS VALUES(DEFAULT, ?,?,?,?,?,?,?,?)",
-"UPDATE LoanApps SET status = 'accept',timestamp=? where id = ?",
-"UPDATE LoanApps SET status = 'reject',timestamp=? where id = ?"
+    "SELECT isblocked FROM SavingAccount WHERE accountID = ?",
+    """Select (inbound.t_amount-outbound.t_amount) as t_amount  from
+    (select sa.accountid as sid, sum(t.amount) as t_amount from savingaccount sa, transfer t
+    where sa.accountid=? and sa.accountid=t.sourceid
+    group by sid) as outbound,
+    (select sa.accountid as sid, sum(t.amount) as t_amount from savingaccount sa, transfer t
+    where sa.accountid=? and sa.accountid=t.targetid
+    group by sid) as inbound""",
+    "INSERT INTO LOANTRANS VALUES(DEFAULT, ?,?,?,?,?,?,?,?);",
+    "UPDATE LoanApps SET status = 'accept',timestamp=? where id = ?",
+    "UPDATE LoanApps SET status = 'reject',timestamp=? where id = ?"
 ]
 
 [AT-3.1]
-sql = "SELECT applicantid, id, timestamp, duration FROM loanapps where status='under_review' ORDER BY RANDOM() LIMIT 1"
+sql = "SELECT applicantid, id, timestamp, duration FROM loanapps where status='under_review' ORDER BY timestamp LIMIT 1"
 
 [AT-4]
 sql = [
-    "select count(distinct sa2.accountid) from transfer t, savingAccount sa1, savingAccount sa2, loantrans lt where sa1.accountid=? and sa1.accountid=t.targetid and t.sourceid=sa2.accountid and lt.applicantid=sa2.accountid and lt.status='accept'",
-    "UPDATE savingAccount SET balance = balance + ? where accountID = ?",
-    "UPDATE LoanTrans SET status = 'lent', timestamp=? where id = ?"
+    "select count(distinct sa2.accountid) from transfer t, savingAccount sa1, savingAccount sa2, loantrans lt where sa1.accountid = ? and sa1.accountid = t.targetid and t.sourceid = sa2.accountid and lt.applicantid=sa2.accountid and lt.status='accept';",
+    "UPDATE savingAccount SET balance = balance + ? where accountID = ?;",
+    "UPDATE LoanTrans SET status = 'lent', timestamp=? where id = ?;"
 ]
 
 [AT-4.1]
-sql = "SELECT applicantid, amount, id, timestamp FROM loantrans where status='accept' ORDER BY RANDOM() LIMIT 1"
+sql = "SELECT applicantid, amount, id, timestamp FROM loantrans where status='accept' ORDER BY timestamp LIMIT 1"
 
 [AT-5]
 sql = [
@@ -344,13 +347,13 @@ sql = "SELECT applicantid FROM loantrans where status='lent' and delinquency=1 O
 
 [AT-6]
 sql = [
-    "SELECT count(id) FROM LoanTrans WHERE date(contract_timestamp) + duration + 30 < cast('2024-01-01' as date) and applicantID=?",
-    "UPDATE savingaccount SET isBlocked = 1  where accountID = ?",
-    "UPDATE checkingaccount SET isBlocked = 1 where accountID = ?"
+    "SELECT count(applicantid) FROM LoanTrans WHERE date(contract_timestamp) + duration + 30 < cast('2024-01-01' as date) and applicantID=?;",
+    "UPDATE savingaccount SET isBlocked = 1  where accountID = ?;",
+    "UPDATE checkingaccount SET isBlocked = 1 where accountID = ?;"
 ]
 
 [IQ-1]
-sql="""select t.timestamp, t.amount, c.custid, c.name
+sql="""select  t.timestamp, t.amount, c.custid, c.name
 from transfer t, customer c
 where t.sourceid=? and t.targetid=c.custid
 UNION
@@ -358,12 +361,13 @@ select t.timestamp, t.amount, c.custid, c.name
 from transfer t, customer c
 where t.targetid=? and t.sourceid=c.custid
 order by timestamp
-Limit 10;"""
+Limit 10
+"""
 
 [IQ-2]
-sql="""select ch.timestamp, ch.amount, co.companyid, co.name
+sql="""select  ch.timestamp, ch.amount, co.companyid, co.name
 from checking ch, company co
-where ch.sourceid=? and ch.targetid= co.companyid
+where ch.sourceid = ? and ch.targetid= co.companyid
 UNION
 select ch.timestamp, ch.amount, co.companyid, co.name
 from checking ch, company co
@@ -372,15 +376,15 @@ order by timestamp
 Limit 10;"""
 
 [IQ-3]
-sql="""select co.name, cu.custid, cu.name, sa.isblocked, ca.isblocked
+sql="""select  co.name, cu.custid, cu.name, sa.isblocked, ca.isblocked
 from customer cu, company co, savingaccount sa, checkingaccount ca
-where co.companyid =? and cu.companyid= co.companyid
+where co.companyid = ? and cu.companyid= co.companyid
 and sa.accountid=cu.custid and ca.accountid=cu.custid;"""
 
 [IQ-4]
 sql="""(select co.name, t.amount, t.timestamp
 from company co, transfer t
-where t.sourceid =? and t.type='invest' and
+where t.sourceid = ? and t.type='invest' and
 t.targetid= co.companyid)
 UNION
 (select cu.name, t.amount, t.timestamp
@@ -400,9 +404,10 @@ where t.sourceid =? and lt.delinquency = 1;"""
 sql="SELECT applicantid FROM loantrans ORDER BY RANDOM() LIMIT 1"
 
 [IQ-6]
-sql = """With abnormal_accounts as
-(select distinct(applicantid) as id, amount from loantrans lt1 where contract_timestamp is not null and date(contract_timestamp)+duration<cast('2024-01-01' as date) order by amount DESC limit 100)
-Select aa.id, lt2.amount, lt2.timestamp, lt2.status, la.timestamp
+sql =""" With abnormal_accounts as
+(select distinct(applicantid) as id, amount from loantrans lt1
+where contract_timestamp is not null and date(contract_timestamp)+duration<cast('2024-01-01' as date) order by amount DESC limit 100)
+Select  aa.id, lt2.amount, lt2.timestamp, lt2.status, la.timestamp
 from loantrans lt2, loanapps la, abnormal_accounts aa
 where aa.id=lt2.applicantid and la.id= lt2.appid; """
 
@@ -410,10 +415,10 @@ where aa.id=lt2.applicantid and la.id= lt2.appid; """
 sql = """select t.id, t.fresh_ts
 from transfer t, customer c
 where t.targetid=? and t.targetid=c.custid and t.fresh_ts is not null
-order by t.fresh_ts DESC limit 10 ;"""
+order by t.fresh_ts DESC limit 10;"""
 
 [fresh-1]
 sql="""select sa.accountID, sa.fresh_ts
 from savingaccount sa,company co,customer cu
 where sa.accountid=cu.custid and co.companyid=? and co.companyID = cu.companyID
- order by cu.created_date ASC limit 10;"""
+ order by sa.fresh_ts DESC limit 10;"""
