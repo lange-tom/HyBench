@@ -1,3 +1,11 @@
+# Notice on forked project
+
+This is an updated version of the [original](https://github.com/Rucchao/HyBench-2024) HyBench implementation in Java and introduces the following changes:
+- updated queries for A4 and PostgreSQL
+- fixed broken code for A4 and PostgreSQL
+- added pre-generated data sets for Scale Factor 1, 10 and 100
+- added missing dependency
+
 # HyBench - A New Benchmark for HTAP Databases 
 
 Please refer to our [VLDB 2024 Research Paper](https://vldb.org/pvldb/volumes/17/paper/HyBench%3A%20A%20New%20Benchmark%20for%20HTAP%20Databases) for more details:
